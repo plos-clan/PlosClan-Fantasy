@@ -1,0 +1,75 @@
+---
+import OrbitScene from './OrbitScene.astro';
+import ParallaxBands from './ParallaxBands.astro';
+---
+
+<header data-scroll-hero class="relative bg-black text-white">
+	<section data-scroll-stage class="relative min-h-[200vh]">
+		<div class="sticky top-0 h-screen overflow-hidden">
+			<OrbitScene />
+			<div class="relative z-10 h-full px-6 py-16 sm:px-10 sm:py-24">
+				<div class="mx-auto flex h-full w-full max-w-5xl flex-col justify-between">
+					<div class="space-y-3">
+						<p
+							data-fade-item
+							class="text-xs uppercase tracking-[0.55em] text-white/45 will-change-[opacity]"
+						>
+							PROGRAM LANGUAGE & OPERATING SYSTEM
+						</p>
+						<h1
+							data-fade-item
+							class="text-4xl font-semibold uppercase tracking-[0.22em] will-change-[opacity] sm:text-6xl"
+						>
+							PLOS-CLAN
+						</h1>
+					</div>
+
+					<div class="space-y-3 text-right self-end">
+						<h3
+							data-fade-item
+							class="text-2xl tracking-[0.55em] text-white/45 will-change-[opacity]"
+						>
+							MAKE STAMON GREAT AGIN!
+						</h3>
+						<h1
+							data-fade-item
+							class="text-4xl font-semibold tracking-[0.22em] will-change-[opacity] sm:text-4xl"
+						>
+							200+ Members | 70+ Projects
+						</h1>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<ParallaxBands />
+	</section>
+</header>
+
+<script>
+	import { gsap } from 'gsap';
+	import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+	gsap.registerPlugin(ScrollTrigger);
+
+	for (const stage of document.querySelectorAll('[data-scroll-stage]')) {
+		const fadeItems = stage.querySelectorAll('[data-fade-item]');
+		if (!fadeItems.length) continue;
+
+		gsap.fromTo(
+			fadeItems,
+			{ opacity: 1 },
+			{
+				opacity: 0,
+				ease: 'none',
+				scrollTrigger: {
+					trigger: stage,
+					start: 'top top',
+					end: '+=100%',
+					scrub: true,
+					invalidateOnRefresh: true,
+				},
+			},
+		);
+	}
+</script>

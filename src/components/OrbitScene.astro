@@ -1,0 +1,263 @@
+<div
+        data-orbit-scene
+        aria-hidden="true"
+        class="pointer-events-none absolute inset-0 z-0 overflow-hidden"
+>
+    <canvas
+            data-orbit-canvas
+            class="block h-full w-full"
+            style="image-rendering: crisp-edges;"
+    ></canvas>
+</div>
+
+<script>
+    import {gsap} from 'gsap';
+    import {ScrollTrigger} from 'gsap/ScrollTrigger';
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    const TAU = Math.PI * 2;
+    const DEG = Math.PI / 180;
+    const WORLD_UP = {x: 0, y: 1, z: 0};
+    const POLAR_EPSILON = 0.08;
+
+    const lerp = (start: number, end: number, progress: number) => start + (end - start) * progress;
+    const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+    const smoothstep = (edge0: number, edge1: number, value: number) => {
+        const x = clamp((value - edge0) / (edge1 - edge0), 0, 1);
+        return x * x * (3 - 2 * x);
+    };
+    const length = (vector: { x: any; y: any; z: any; }) => Math.hypot(vector.x, vector.y, vector.z);
+    const subtract = (a: { x: any; y: any; z: any; }, b: { x: any; y: any; z: any; }) => ({
+        x: a.x - b.x,
+        y: a.y - b.y,
+        z: a.z - b.z
+    });
+    const dot = (a: { x: any; y: any; z: any; }, b: { x: any; y: any; z: any; }) => a.x * b.x + a.y * b.y + a.z * b.z;
+    const cross = (a: { x: any; y: any; z: any; }, b: { x: any; y: any; z: any; }) => ({
+        x: a.y * b.z - a.z * b.y,
+        y: a.z * b.x - a.x * b.z,
+        z: a.x * b.y - a.y * b.x,
+    });
+    const normalize = (vector: { x: any; y: any; z: any; }) => {
+        const size = length(vector) || 1;
+        return {
+            x: vector.x / size,
+            y: vector.y / size,
+            z: vector.z / size,
+        };
+    };
+
+    const rotateX = (vector: { x: any; y: any; z: any; }, angle: number) => {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+
+        return {
+            x: vector.x,
+            y: vector.y * cos - vector.z * sin,
+            z: vector.y * sin + vector.z * cos,
+        };
+    };
+
+    const sphericalToCartesian = (radius: number, phi: number, theta: number) => {
+        const sinPhiRadius = Math.sin(phi) * radius;
+        return {
+            x: sinPhiRadius * Math.sin(theta),
+            y: Math.cos(phi) * radius,
+            z: sinPhiRadius * Math.cos(theta),
+        };
+    };
+
+    const createIcosahedron = () => {
+        const golden = (1 + Math.sqrt(5)) / 2;
+        const rawVertices = [
+            {x: -1, y: golden, z: 0},
+            {x: 1, y: golden, z: 0},
+            {x: -1, y: -golden, z: 0},
+            {x: 1, y: -golden, z: 0},
+            {x: 0, y: -1, z: golden},
+            {x: 0, y: 1, z: golden},
+            {x: 0, y: -1, z: -golden},
+            {x: 0, y: 1, z: -golden},
+            {x: golden, y: 0, z: -1},
+            {x: golden, y: 0, z: 1},
+            {x: -golden, y: 0, z: -1},
+            {x: -golden, y: 0, z: 1},
+        ];
+
+        const edges = [];
+        for (let index = 0; index < rawVertices.length; index += 1) {
+            for (let target = index + 1; target < rawVertices.length; target += 1) {
+                const delta = subtract(rawVertices[index], rawVertices[target]);
+                if (length(delta) < 2.05) edges.push([index, target]);
+            }
+        }
+
+        const vertices = rawVertices.map((vertex) => {
+            const normalized = normalize(vertex);
+            return {
+                x: normalized.x * 1.15,
+                y: normalized.y * 1.15,
+                z: normalized.z * 1.15,
+            };
+        });
+
+        return {vertices, edges};
+    };
+
+    const createStars = (count: number) =>
+        Array.from({length: count}, (_, index) => {
+            const distance = lerp(2, 3.5, Math.random());
+            const phi = lerp(80 * DEG, 100 * DEG, Math.random());
+            const theta = TAU * (index / count);
+            const position = sphericalToCartesian(distance, phi, theta);
+            return {
+                position,
+                size: lerp(0.04, 0.08, Math.random()),
+            };
+        });
+
+    const createProjection = (camera: { x: any; y: any; z: any; }, width: number, height: number) => {
+        let backward = normalize(camera);
+        let right = cross(WORLD_UP, backward);
+
+        if (length(right) < 0.0001) {
+            backward = normalize({x: backward.x, y: backward.y, z: backward.z + 0.0001});
+            right = cross(WORLD_UP, backward);
+        }
+
+        right = normalize(right);
+        const up = cross(backward, right);
+        const focalLength = Math.min(width, height) * 0.9;
+
+        return (point: any) => {
+            const relative = subtract(point, camera);
+            const depth = -dot(relative, backward);
+            if (depth <= 0.1) return null;
+
+            const projectedX = dot(relative, right);
+            const projectedY = dot(relative, up);
+            const scale = focalLength / depth;
+
+            return {
+                x: width * 0.5 + projectedX * scale,
+                y: height * 0.5 - projectedY * scale,
+                scale,
+                depth,
+            };
+        };
+    };
+
+    for (const scene of document.querySelectorAll('[data-orbit-scene]')) {
+        const canvas = scene.querySelector('[data-orbit-canvas]');
+        const stage = scene.closest('[data-scroll-stage]') || scene.closest('[data-scroll-hero]');
+        if (!(canvas instanceof HTMLCanvasElement) || !(stage instanceof HTMLElement)) continue;
+
+        const context = canvas.getContext('2d');
+        if (!context) continue;
+
+        const shape = createIcosahedron();
+        const stars = createStars(120);
+        const state = {
+            width: 0,
+            height: 0,
+            progress: 0,
+        };
+
+        const resize = () => {
+            state.width = window.innerWidth;
+            state.height = window.innerHeight;
+
+            const pixelRatio = Math.min(window.devicePixelRatio || 1, 0.45);
+            canvas.width = Math.max(1, Math.floor(state.width * pixelRatio));
+            canvas.height = Math.max(1, Math.floor(state.height * pixelRatio));
+            canvas.style.width = `${state.width}px`;
+            canvas.style.height = `${state.height}px`;
+        };
+
+        const draw = () => {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.save();
+            context.scale(canvas.width / state.width, canvas.height / state.height);
+
+            const polar = lerp(POLAR_EPSILON, Math.PI - POLAR_EPSILON, state.progress);
+            const distance = lerp(10, 3, state.progress);
+            const azimuth = lerp(0, Math.PI * 0.18, smoothstep(0.18, 0.88, state.progress));
+            const camera = sphericalToCartesian(distance, polar, azimuth);
+            const project = createProjection(camera, state.width, state.height);
+
+            const renderedStars = stars
+                .map((star) => {
+                    const projected = project(star.position);
+                    if (!projected) return null;
+
+                    return {
+                        ...projected,
+                        size: clamp(star.size * projected.scale, 0.8, 7),
+                        alpha: clamp(0.16 + projected.scale * 0.045, 0.12, 1),
+                    };
+                })
+                .filter(Boolean)
+                .sort((a, b) => (b == null || a == null ? 0 : b.depth - a.depth));
+
+            for (const star of renderedStars) {
+                if (star == null) continue;
+                context.strokeStyle = `rgba(255, 255, 255, ${star.alpha})`;
+                context.lineWidth = 1;
+                context.strokeRect(
+                    star.x - star.size * 0.5,
+                    star.y - star.size * 0.5,
+                    star.size,
+                    star.size,
+                );
+            }
+
+            const projectedVertices = shape.vertices.map((vertex) => project(rotateX(vertex, 0.35)));
+
+            context.beginPath();
+            context.strokeStyle = 'rgb(255 255 255)';
+            context.lineWidth = 1.1;
+            for (const [from, to] of shape.edges) {
+                const start = projectedVertices[from];
+                const end = projectedVertices[to];
+                if (!start || !end) continue;
+                context.moveTo(start.x, start.y);
+                context.lineTo(end.x, end.y);
+            }
+            context.stroke();
+            context.restore();
+        };
+
+        const renderFrame = () => {
+            if (!state.width || !state.height) return;
+            draw();
+        };
+
+        resize();
+        draw();
+
+        const scrollTween = gsap.to(state, {
+            progress: 1,
+            ease: 'none',
+            scrollTrigger: {
+                trigger: stage,
+                start: 'top top',
+                end: 'bottom bottom',
+                scrub: true,
+                invalidateOnRefresh: true,
+            },
+        });
+
+        gsap.ticker.add(renderFrame);
+        window.addEventListener('resize', resize);
+
+        window.addEventListener(
+            'pagehide',
+            () => {
+                gsap.ticker.remove(renderFrame);
+                scrollTween.kill();
+            },
+            {once: true},
+        );
+    }
+</script>

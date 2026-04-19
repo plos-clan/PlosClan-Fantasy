@@ -1,0 +1,154 @@
+---
+const rows = [
+	{ text: 'MAKE STAMON GREAT AGAIN', velocity: -5 },
+	{ text: 'WELCOME TO PLOS-CLAN', velocity: 5 },
+];
+
+const copies = 6;
+---
+
+<section data-parallax-section class="relative z-20 min-h-screen w-full text-white">
+	<div class="flex min-h-screen w-full translate-y-48 flex-col justify-center gap-6 py-24 sm:translate-y-48">
+		{rows.map((row) => (
+			<div class="w-full overflow-hidden" data-parallax-row data-base-velocity={row.velocity}>
+				<div
+					class="parallax-plaster flex w-max whitespace-nowrap text-[clamp(3.5rem,8vw,6rem)] font-semibold leading-[0.82] tracking-[-0.08em] uppercase"
+					data-parallax-scroller
+				>
+					{Array.from({ length: copies }).map((_, index) => (
+						<span class="mr-8 block" aria-hidden={index > 0 ? 'true' : undefined}>
+							{row.text}
+						</span>
+					))}
+				</div>
+			</div>
+		))}
+	</div>
+</section>
+
+<script>
+	import { gsap } from 'gsap';
+	import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+	gsap.registerPlugin(ScrollTrigger);
+
+	const wrap = (min: number, max: number, value: number) => {
+		const range = max - min;
+		return ((((value - min) % range) + range) % range) + min;
+	};
+
+	for (const section of document.querySelectorAll('[data-parallax-section]')) {
+		const rows = Array.from(section.querySelectorAll('[data-parallax-row]'));
+		if (!rows.length) continue;
+
+		const state = {
+			lastScrollY: window.scrollY,
+			targetVelocity: 0,
+			smoothVelocity: 0,
+		};
+
+		const entries = rows
+			.map((row) => {
+				const scroller = row.querySelector('[data-parallax-scroller]');
+				if (!(scroller instanceof HTMLElement)) return null;
+
+				return {
+					baseVelocity: Number(row.getAttribute('data-base-velocity')) || 0,
+					baseX: 0,
+					directionFactor: 1,
+					scroller,
+					wrapWidth: 1,
+				};
+			})
+			.filter(Boolean);
+
+		if (!entries.length) continue;
+
+		const refreshWidths = () => {
+			for (const entry of entries) {
+				if (entry == null) continue;
+				entry.wrapWidth = Math.max(entry.scroller.scrollWidth * 0.5, 1);
+			}
+		};
+
+		const handleScroll = () => {
+			const currentScrollY = window.scrollY;
+			const delta = currentScrollY - state.lastScrollY;
+			state.lastScrollY = currentScrollY;
+			state.targetVelocity = gsap.utils.clamp(-1400, 1400, delta * 42);
+		};
+
+		const tick = (_time: number, deltaTime: number) => {
+			const deltaSeconds = Math.min(deltaTime, 64) / 1000;
+			state.smoothVelocity += (state.targetVelocity - state.smoothVelocity) * 0.08;
+
+			const velocityFactor = gsap.utils.mapRange(
+				0,
+				1400,
+				0,
+				5,
+				Math.abs(state.smoothVelocity),
+			);
+
+			for (const entry of entries) {
+				if (entry == null) continue;
+				if (state.smoothVelocity < -1) entry.directionFactor = -1;
+				else if (state.smoothVelocity > 1) entry.directionFactor = 1;
+
+				let moveBy = entry.directionFactor * entry.baseVelocity * deltaSeconds * 36;
+				moveBy += entry.directionFactor * Math.abs(moveBy) * velocityFactor;
+
+				entry.baseX += moveBy;
+				const x = wrap(-entry.wrapWidth, 0, entry.baseX);
+				entry.scroller.style.transform = `translate3d(${x}px, 0, 0)`;
+			}
+		};
+
+		refreshWidths();
+		handleScroll();
+
+			const revealTween = gsap.fromTo(
+				section,
+				{ autoAlpha: 0 },
+				{
+					autoAlpha: 1,
+					ease: 'none',
+					scrollTrigger: {
+						trigger: section,
+						start: 'top bottom',
+						end: '+=65%',
+						scrub: true,
+						invalidateOnRefresh: true,
+					},
+				},
+			);
+
+		gsap.ticker.add(tick);
+		window.addEventListener('scroll', handleScroll, { passive: true });
+		window.addEventListener('resize', refreshWidths);
+
+		window.addEventListener(
+			'pagehide',
+			() => {
+				gsap.ticker.remove(tick);
+				revealTween.kill();
+				window.removeEventListener('scroll', handleScroll);
+				window.removeEventListener('resize', refreshWidths);
+			},
+			{ once: true },
+		);
+	}
+</script>
+
+<style is:global>
+	@font-face {
+		font-family: 'PlasterLocal';
+		src: url('/Plaster-Regular.woff2') format('woff2');
+		font-display: swap;
+		font-style: oblique;
+	}
+
+	.parallax-plaster {
+		font-family: 'PlasterLocal', sans-serif;
+	}
+</style>

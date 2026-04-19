@@ -1,0 +1,539 @@
+---
+
+import "../styles/global.css"
+
+const projectImages = [
+    {
+        src: 'https://aliceserver.lcatnya.top/api/pin/?username=plos-clan&repo=Plant-OS&show_owner=true&bg_color=00000000&title_color=ffffff&text_color=d4d4d8&icon_color=ffffff&border_color=3f3f46&description_lines_count=2',
+        alt: 'Plant-OS repository card',
+        href: 'https://github.com/plos-clan/Plant-OS',
+        tilt: '--tilt-x:-2deg;--tilt-y:4deg;--float-delay:0s;--float-distance:12px;',
+    },
+    {
+        src: 'https://aliceserver.lcatnya.top/api/pin/?username=plos-clan&repo=CoolPotOS&show_owner=true&bg_color=00000000&title_color=ffffff&text_color=d4d4d8&icon_color=ffffff&border_color=3f3f46&description_lines_count=2',
+        alt: 'CoolPotOS repository card',
+        href: 'https://github.com/plos-clan/CoolPotOS',
+        tilt: '--tilt-x:2deg;--tilt-y:-4deg;--float-delay:-1.2s;--float-distance:10px;',
+    },
+    {
+        src: 'https://aliceserver.lcatnya.top/api/pin/?username=plos-clan&repo=plant-vfs&show_owner=true&bg_color=00000000&title_color=ffffff&text_color=d4d4d8&icon_color=ffffff&border_color=3f3f46&description_lines_count=2',
+        alt: 'plant-vfs repository card',
+        href: 'https://github.com/plos-clan/plant-vfs',
+        tilt: '--tilt-x:-2deg;--tilt-y:-3deg;--float-delay:-2.1s;--float-distance:14px;',
+    },
+    {
+        src: 'https://aliceserver.lcatnya.top/api/pin/?username=plos-clan&repo=libos-terminal&show_owner=true&bg_color=00000000&title_color=ffffff&text_color=d4d4d8&icon_color=ffffff&border_color=3f3f46&description_lines_count=2',
+        alt: 'libos-terminal repository card',
+        href: 'https://github.com/plos-clan/libos-terminal',
+        tilt: '--tilt-x:2deg;--tilt-y:1deg;--float-delay:-0.7s;--float-distance:11px;',
+    },
+];
+---
+
+<section data-section1 class="relative min-h-[460vh]">
+    <div class="sticky top-0 box-border h-screen overflow-hidden px-6 pt-16 pb-8 sm:px-10 sm:pt-24 sm:pb-10">
+        <div class="project-card-stars" data-project-stars-layer aria-hidden="true">
+            <canvas
+                    class="project-card-stars-canvas"
+                    data-project-stars-canvas
+            ></canvas>
+        </div>
+        <div class="mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col 2xl:max-w-[88rem]">
+            <h2
+                data-project-reveal
+                class="shrink-0 text-3xl cpos-logo text-center tracking-wide font-bold will-change-[opacity]"
+            >
+                Projects
+            </h2>
+
+            <div class="flex min-h-0 flex-1 items-center">
+                <div
+                    data-project-viewport
+                    class="relative flex h-full w-full items-center justify-center overflow-hidden py-16 sm:py-20"
+                >
+                    <div class="relative h-full w-full">
+                        {projectImages.map((image, index) => (
+                            <figure
+                                data-project-slide
+                                class="absolute inset-0 box-border flex items-center justify-center px-4 py-10 opacity-0 sm:px-6"
+                                aria-label={`Project slide ${index + 1}`}
+                            >
+                                <div class="project-card-motion">
+                                    <a
+                                        href={image.href}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        class="project-card-shell block"
+                                        style={image.tilt}
+                                    >
+                                        <div class="project-card-inner">
+                                            <img
+                                                src={image.src}
+                                                alt={image.alt}
+                                                class="project-card-image block h-auto w-auto max-w-[min(98vw,1120px)]"
+                                                loading="lazy"
+                                            />
+                                        </div>
+                                    </a>
+                                </div>
+                            </figure>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+<script>
+    import { gsap } from 'gsap';
+    import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+    gsap.registerPlugin(ScrollTrigger);
+    const randomBetween = (min: number, max: number) => min + Math.random() * (max - min);
+    const STAR_SHIFT_X = 206;
+
+    const STAR_COUNT = randomBetween(42, 60);
+    const DEG = Math.PI / 180;
+    const cubeVertices = [
+        { x: -1, y: -1, z: -1 },
+        { x: 1, y: -1, z: -1 },
+        { x: 1, y: 1, z: -1 },
+        { x: -1, y: 1, z: -1 },
+        { x: -1, y: -1, z: 1 },
+        { x: 1, y: -1, z: 1 },
+        { x: 1, y: 1, z: 1 },
+        { x: -1, y: 1, z: 1 },
+    ];
+    const cubeEdges = [
+        [0, 1], [1, 2], [2, 3], [3, 0],
+        [4, 5], [5, 6], [6, 7], [7, 4],
+        [0, 4], [1, 5], [2, 6], [3, 7],
+    ];
+    const createRandomStar = () => {
+        const x = randomBetween(0, 110);
+        const y = randomBetween(0, 95);
+        const z = randomBetween(36, 92);
+        const size = randomBetween(20, 57);
+        const delay = randomBetween(-3.2, 0);
+
+        return {
+            x,
+            y,
+            z,
+            size,
+            phase: delay * -3.6,
+            baseRotationX: randomBetween(-0.42, 0.42),
+            baseRotationY: randomBetween(-0.5, 0.5),
+            baseRotationZ: randomBetween(-0.28, 0.28),
+        };
+    };
+    const rotateX = (point: { x: number; y: number; z: number }, angle: number) => {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return {
+            x: point.x,
+            y: point.y * cos - point.z * sin,
+            z: point.y * sin + point.z * cos,
+        };
+    };
+    const rotateY = (point: { x: number; y: number; z: number }, angle: number) => {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return {
+            x: point.x * cos + point.z * sin,
+            y: point.y,
+            z: point.z * cos - point.x * sin,
+        };
+    };
+    const rotateZ = (point: { x: number; y: number; z: number }, angle: number) => {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return {
+            x: point.x * cos - point.y * sin,
+            y: point.x * sin + point.y * cos,
+            z: point.z,
+        };
+    };
+    const projectPoint = (
+        point: { x: number; y: number; z: number },
+        cameraZ: number,
+        focalLength: number,
+    ) => {
+        const depth = cameraZ - point.z;
+        if (depth <= 0.01) return null;
+
+        const scale = focalLength / depth;
+        return {
+            x: point.x * scale,
+            y: point.y * scale,
+        };
+    };
+
+    for (const section of document.querySelectorAll('[data-section1]')) {
+        const projectTitle = section.querySelector('[data-project-reveal]');
+        const slides = Array.from(section.querySelectorAll('[data-project-slide]'));
+        if (!(projectTitle instanceof HTMLElement)) continue;
+
+        gsap.fromTo(
+            projectTitle,
+            { opacity: 0 },
+            {
+                opacity: 1,
+                ease: 'none',
+                scrollTrigger: {
+                    trigger: section,
+                    start: 'top-=10% top',
+                    end: '+=55%',
+                    scrub: true,
+                    invalidateOnRefresh: true,
+                },
+            },
+        );
+
+        if (!slides.length) continue;
+
+        let activeIndex = 0;
+        const slideActors = slides.map((slide) => {
+            if (!(slide instanceof HTMLElement)) return null;
+
+            const card = slide.querySelector('.project-card-motion');
+            return {
+                slide,
+                card: card instanceof HTMLElement ? card : null,
+            };
+        });
+        const starScenes = Array.from(section.querySelectorAll('[data-project-stars-layer]'))
+            .map((layer) => {
+                if (!(layer instanceof HTMLElement)) return null;
+
+                const canvas = layer.querySelector('[data-project-stars-canvas]');
+                if (!(canvas instanceof HTMLCanvasElement)) return null;
+
+                const context = canvas.getContext('2d');
+                if (!context) return null;
+
+                const stars = Array.from({ length: STAR_COUNT }, () => createRandomStar());
+
+                return {
+                    layer,
+                    canvas,
+                    context,
+                    stars,
+                    width: 0,
+                    height: 0,
+                    shiftX: 0,
+                };
+            })
+            .filter(Boolean);
+
+        const resizeStarScenes = () => {
+            starScenes.forEach((scene) => {
+                if (scene == null) return;
+                const bounds = scene.layer.getBoundingClientRect();
+                scene.width = Math.max(1, bounds.width);
+                scene.height = Math.max(1, bounds.height);
+
+                const pixelRatio = Math.min(window.devicePixelRatio || 1, 0.75);
+                scene.canvas.width = Math.max(1, Math.floor(scene.width * pixelRatio));
+                scene.canvas.height = Math.max(1, Math.floor(scene.height * pixelRatio));
+                scene.canvas.style.width = `${scene.width}px`;
+                scene.canvas.style.height = `${scene.height}px`;
+            });
+        };
+
+        const renderStarScenes = () => {
+            const time = performance.now() * 0.001;
+
+            starScenes.forEach((scene) => {
+                if(scene == null) return;
+                if (!scene.width || !scene.height) return;
+
+                scene.context.clearRect(0, 0, scene.canvas.width, scene.canvas.height);
+                scene.context.save();
+                scene.context.scale(
+                    scene.canvas.width / scene.width,
+                    scene.canvas.height / scene.height,
+                );
+
+                for (const star of scene.stars) {
+                    if (!star) continue;
+
+                    const x = scene.width * (star.x / 100) + scene.shiftX;
+                    const y = scene.height * (star.y / 100);
+                    const floatOffset = Math.sin(time * 1.6 + star.phase) * (1.8 + star.size * 0.06);
+                    const size = star.size;
+                    const alpha = Math.min(Math.max(0.16 + star.z * 0.0048, 0.2), 0.9);
+                    const rotationTime = time * (0.55 + star.size * 0.006) + star.phase;
+                    const rotationX = star.baseRotationX + Math.sin(rotationTime * 0.7) * (16 * DEG);
+                    const rotationY = star.baseRotationY + rotationTime * 0.55;
+                    const rotationZ = star.baseRotationZ + Math.cos(rotationTime * 0.6) * (10 * DEG);
+                    const cubeScale = size * 0.62;
+                    const cameraZ = cubeScale * 5.2;
+                    const focalLength = cubeScale * 3.6;
+                    const projectedVertices = cubeVertices.map((vertex) => {
+                        let point = {
+                            x: vertex.x * cubeScale,
+                            y: vertex.y * cubeScale,
+                            z: vertex.z * cubeScale,
+                        };
+                        point = rotateX(point, rotationX);
+                        point = rotateY(point, rotationY);
+                        point = rotateZ(point, rotationZ);
+                        return projectPoint(point, cameraZ, focalLength);
+                    });
+
+                    scene.context.beginPath();
+                    scene.context.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+                    scene.context.lineWidth = Math.max(0.9, size * 0.065);
+                    for (const [from, to] of cubeEdges) {
+                        const start = projectedVertices[from];
+                        const end = projectedVertices[to];
+                        if (!start || !end) continue;
+
+                        scene.context.moveTo(x + start.x, y + start.y + floatOffset);
+                        scene.context.lineTo(x + end.x, y + end.y + floatOffset);
+                    }
+                    scene.context.stroke();
+                }
+
+                scene.context.restore();
+            });
+        };
+
+        const syncActiveSlide = (nextIndex: number, immediate = false) => {
+            const boundedIndex = gsap.utils.clamp(0, slides.length - 1, nextIndex);
+            if (boundedIndex === activeIndex && !immediate) return;
+
+            const previousIndex = activeIndex;
+            activeIndex = boundedIndex;
+            const direction = activeIndex >= previousIndex ? 1 : -1;
+            const targetStarShiftX = activeIndex * -STAR_SHIFT_X;
+
+            starScenes.forEach((scene) => {
+                if (scene == null) return;
+
+                gsap.killTweensOf(scene);
+                if (immediate) {
+                    scene.shiftX = targetStarShiftX;
+                    return;
+                }
+
+                gsap.to(
+                    scene,
+                    {
+                        shiftX: targetStarShiftX,
+                        duration: 0.82,
+                        ease: 'power2.out',
+                        overwrite: 'auto',
+                    },
+                );
+            });
+
+            slideActors.forEach((actor, index) => {
+                if (!actor) return;
+
+                const { slide, card } = actor;
+                const isActive = index === activeIndex;
+                const wasActive = index === previousIndex;
+
+                gsap.killTweensOf(slide);
+                if (card) gsap.killTweensOf(card);
+
+                if (immediate) {
+                    gsap.set(slide, {
+                        autoAlpha: isActive ? 1 : 0,
+                        zIndex: isActive ? 2 : 1,
+                        pointerEvents: isActive ? 'auto' : 'none',
+                    });
+                    if (card) {
+                        gsap.set(card, { xPercent: 0, autoAlpha: isActive ? 1 : 0 });
+                    }
+                    return;
+                }
+
+                if (isActive) {
+                    gsap.set(slide, {
+                        autoAlpha: 1,
+                        zIndex: 3,
+                        pointerEvents: 'auto',
+                    });
+                    if (card) {
+                        gsap.fromTo(
+                            card,
+                            {
+                                xPercent: direction > 0 ? 104 : -104,
+                                autoAlpha: 0,
+                            },
+                            {
+                                xPercent: 0,
+                                autoAlpha: 1,
+                                duration: 0.62,
+                                ease: 'power3.out',
+                                overwrite: 'auto',
+                            },
+                        );
+                    }
+                } else if (wasActive) {
+                    if (card) {
+                        gsap.to(card, {
+                            xPercent: direction > 0 ? -104 : 104,
+                            autoAlpha: 0,
+                            duration: 0.54,
+                            ease: 'power2.out',
+                            overwrite: 'auto',
+                        });
+                    }
+                    gsap.to(slide, {
+                        autoAlpha: 0,
+                        duration: 0.01,
+                        delay: 0.88,
+                        overwrite: 'auto',
+                        onStart: () => gsap.set(slide, { zIndex: 1 }),
+                        onComplete: () => gsap.set(slide, { pointerEvents: 'none' }),
+                    });
+                } else {
+                    gsap.set(slide, {
+                        autoAlpha: 0,
+                        zIndex: 1,
+                        pointerEvents: 'none',
+                    });
+                    if (card) {
+                        gsap.set(card, { xPercent: 0, autoAlpha: 0 });
+                    }
+                }
+            });
+        };
+
+        slideActors.forEach((actor, index) => {
+            if (!actor) return;
+
+            gsap.set(actor.slide, {
+                autoAlpha: index === 0 ? 1 : 0,
+                zIndex: index === 0 ? 2 : 1,
+                pointerEvents: index === 0 ? 'auto' : 'none',
+            });
+            if (actor.card) {
+                gsap.set(actor.card, {
+                    xPercent: 0,
+                    autoAlpha: index === 0 ? 1 : 0,
+                });
+            }
+        });
+
+        resizeStarScenes();
+        renderStarScenes();
+        gsap.ticker.add(renderStarScenes);
+
+        const stepTrigger = ScrollTrigger.create({
+            trigger: section,
+            start: 'top top',
+            end: 'bottom bottom',
+            scrub: true,
+            invalidateOnRefresh: true,
+            onUpdate: (self) => {
+                const normalized = self.progress * (slides.length - 1);
+                const nextIndex = gsap.utils.clamp(
+                    0,
+                    slides.length - 1,
+                    Math.round(normalized),
+                );
+                syncActiveSlide(nextIndex);
+            },
+            onRefresh: () => {
+                syncActiveSlide(activeIndex, true);
+            },
+        });
+
+        const handleResize = () => {
+            resizeStarScenes();
+            renderStarScenes();
+            syncActiveSlide(activeIndex, true);
+        };
+        window.addEventListener('resize', handleResize);
+
+        window.addEventListener(
+            'pagehide',
+            () => {
+                gsap.ticker.remove(renderStarScenes);
+                stepTrigger.kill();
+                window.removeEventListener('resize', handleResize);
+            },
+            { once: true },
+        );
+    }
+</script>
+
+<style>
+    @font-face {
+        font-family: 'CposLogo';
+        src: url('/logo_font.woff2') format('woff2');
+        font-display: swap;
+    }
+
+    .cpos-logo {
+        font-family: 'CposLogo', sans-serif;
+    }
+
+    .project-card-shell {
+        display: block;
+        position: relative;
+        width: fit-content;
+        max-width: 100%;
+        margin-inline: auto;
+        perspective: 1400px;
+        transform-style: preserve-3d;
+        will-change: transform;
+        animation: project-card-float 5.4s ease-in-out infinite;
+        animation-delay: var(--float-delay, 0s);
+    }
+
+    .project-card-motion {
+        position: relative;
+        z-index: 1;
+        width: fit-content;
+        max-width: 100%;
+        will-change: transform, opacity;
+    }
+
+    .project-card-inner {
+        position: relative;
+        transform-origin: center center;
+        transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateZ(0);
+        transform-style: preserve-3d;
+        filter: drop-shadow(0 28px 52px rgba(0, 0, 0, 0.32));
+    }
+
+    .project-card-image {
+        position: relative;
+        z-index: 1;
+        border-radius: 1rem;
+    }
+
+    .project-card-stars {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+    }
+
+    .project-card-stars-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        image-rendering: crisp-edges;
+    }
+
+    @keyframes project-card-float {
+        0%,
+        100% {
+            transform: translate3d(0, calc(var(--float-distance, 10px) * -0.5), 0);
+        }
+
+        50% {
+            transform: translate3d(0, calc(var(--float-distance, 10px) * 0.5), 0);
+        }
+    }
+
+</style>

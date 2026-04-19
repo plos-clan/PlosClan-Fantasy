@@ -1,0 +1,116 @@
+---
+import "../styles/global.css"
+
+interface FooterLink {
+    label: string;
+    href: string;
+}
+
+interface Props {
+    links?: {
+        community: FooterLink[];
+        resources: FooterLink[];
+    };
+}
+
+const { links } = Astro.props;
+const currentYear = new Date().getFullYear();
+
+// 默认链接配置（主人可自行覆盖）
+const defaultLinks = {
+    community: [
+        { label: "论坛讨论", href: "/forum" },
+        { label: "线上活动", href: "/events" },
+        { label: "贡献指南", href: "/contribute" },
+        { label: "成员名录", href: "/members" }
+    ],
+    resources: [
+        { label: "文档中心", href: "/docs" },
+        { label: "教程合集", href: "/tutorials" },
+        { label: "开源项目", href: "/projects" },
+        { label: "技术博客", href: "/blog" }
+    ]
+};
+
+const navLinks = links ?? defaultLinks;
+---
+
+<footer class="relative bg-black text-neutral-400 border-t border-neutral-800/60">
+    <!-- 极客风微网格背景 -->
+    <div class="absolute inset-0 opacity-[0.04] pointer-events-none"
+         style="background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 28px 28px;"></div>
+
+    <div class="relative max-w-7xl mx-auto px-6 py-14">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+
+            <!-- 🐱 品牌区 -->
+            <div class="space-y-5">
+                <h3 class="text-2xl font-bold text-white tracking-[0.2em]">PLOS-CLAN</h3>
+                <p class="text-sm leading-relaxed max-w-xs">
+                    探索编程语言与操作系统的底层逻辑。<br/>
+                    为开发者打造的深度技术社区。
+                </p>
+                <div class="flex gap-3">
+                    <a href="https://github.com" target="_blank" rel="noopener"
+                       class="w-9 h-9 flex items-center justify-center rounded border border-neutral-800 hover:border-white hover:text-white transition-all duration-300">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.39.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.74.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.5 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.44 11.44 0 016.02 0c2.28-1.55 3.29-1.23 3.29-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.82 1.1.82 2.22v3.29c0 .32.21.7.82.58A12.01 12.01 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                    </a>
+                    <a href="https://discord.gg" target="_blank" rel="noopener"
+                       class="w-9 h-9 flex items-center justify-center rounded border border-neutral-800 hover:border-white hover:text-white transition-all duration-300">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.32 4.38A19.5 19.5 0 0015.12 3c-.24.45-.46.92-.64 1.41a18.3 18.3 0 00-5.26 0c-.18-.5-.4-.96-.65-1.41A19.5 19.5 0 003.68 4.38C1.3 8.4.77 12.35 1.05 16.24a19.7 19.7 0 005.97 3.04c.48-.66.91-1.36 1.28-2.09a12.6 12.6 0 01-1.89-.9c.16-.12.32-.23.48-.34a14.02 14.02 0 0012.02 0c.16.11.32.22.48.34-.6.36-1.23.66-1.89.9.37.73.8 1.43 1.28 2.09a19.68 19.68 0 005.97-3.04c.33-4.5-.77-8.46-3.15-11.86zM8.68 13.7c-1.15 0-2.1-1.06-2.1-2.35 0-1.29.93-2.35 2.1-2.35 1.18 0 2.12 1.06 2.1 2.35 0 1.29-.93 2.35-2.1 2.35zm6.64 0c-1.15 0-2.1-1.06-2.1-2.35 0-1.29.93-2.35 2.1-2.35 1.18 0 2.12 1.06 2.1 2.35 0 1.29-.92 2.35-2.1 2.35z"/></svg>
+                    </a>
+                    <a href="/rss.xml"
+                       class="w-9 h-9 flex items-center justify-center rounded border border-neutral-800 hover:border-white hover:text-white transition-all duration-300">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6.18 15.64a2.18 2.18 0 012.18 2.18c0 1.2-1 2.18-2.18 2.18-1.2 0-2.18-1-2.18-2.18 0-1.2 1-2.18 2.18-2.18zM2 4.27A19.9 19.9 0 0119.73 22h-3.06A16.87 16.87 0 005.33 5.33V4.27zm4.03 5.66a9.94 9.94 0 019.94 9.94h-3.06a6.88 6.88 0 00-6.88-6.88V9.93z"/></svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 🌐 社区 -->
+            <div class="space-y-4">
+                <h4 class="text-xs font-semibold text-white uppercase tracking-widest">Community</h4>
+                <ul class="space-y-3">
+                    {navLinks.community.map(link => (
+                            <li>
+                                <a href={link.href} class="text-sm hover:text-white hover:translate-x-1 inline-block transition-all duration-300">
+                                    {link.label}
+                                </a>
+                            </li>
+                    ))}
+                </ul>
+            </div>
+
+            <!--  资源 -->
+            <div class="space-y-4">
+                <h4 class="text-xs font-semibold text-white uppercase tracking-widest">Resources</h4>
+                <ul class="space-y-3">
+                    {navLinks.resources.map(link => (
+                            <li>
+                                <a href={link.href} class="text-sm hover:text-white hover:translate-x-1 inline-block transition-all duration-300">
+                                    {link.label}
+                                </a>
+                            </li>
+                    ))}
+                </ul>
+            </div>
+            <div class="space-y-5">
+                <h4 class="text-xs font-semibold text-white uppercase tracking-widest">Newsletter</h4>
+                <div class="pt-4 border-t border-neutral-800/50">
+                    <ul class="flex flex-wrap gap-4 text-xs">
+                        <li><a href="/privacy" class="hover:text-white transition-colors">隐私政策</a></li>
+                        <li><a href="/terms" class="hover:text-white transition-colors">服务条款</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部版权栏 -->
+        <div class="mt-12 pt-8 border-t border-neutral-800/50 flex flex-col md:flex-row justify-between items-center gap-3 text-xs text-neutral-500">
+            <p>© {currentYear} PLOS-CLAN. All rights reserved.</p>
+            <p>Built with Astro & Tailwind CSS & GSAP</p>
+        </div>
+    </div>
+</footer>
+
+<style>
+</style>
