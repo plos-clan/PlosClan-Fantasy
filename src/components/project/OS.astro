@@ -1,0 +1,21 @@
+---
+import WaveGrid from './WaveGrid.astro';
+---
+
+<article class="os-project">
+    <WaveGrid />
+    <div class="os-content">
+        <p class="eyebrow">PLOS-CLAN / OPERATING SYSTEMS</p>
+        <h2>BUILD<br />FROM ZERO</h2>
+        <p class="description" lang="zh-CN">从内核到用户空间，理解计算机如何运转，<br />一起构建属于我们的操作系统。</p>
+    </div>
+</article>
+
+<style>
+    .os-project { position: relative; min-height: 100svh; height: 100%; overflow: hidden; background: #777; isolation: isolate; }
+    .os-content { position: relative; z-index: 1; padding: clamp(3rem, 12svh, 9rem) clamp(1.5rem, 5vw, 5rem) 6rem; pointer-events: none; color: #fff; text-shadow: 0 2px 24px #0008; }
+    .eyebrow { margin: 0 0 2rem; font-size: 0.7rem; letter-spacing: 0.25em; }
+    h2 { margin: 0; font-size: clamp(3rem, 8vw, 9rem); font-weight: 500; letter-spacing: -0.055em; line-height: 0.95; }
+    .description { margin-top: 2rem; max-width: 28rem; font-size: clamp(0.875rem, 1.1vw, 1rem); line-height: 1.9; }
+    @media (max-height: 600px) { h2 { font-size: clamp(2.5rem, 12svh, 4.5rem); } .os-content { padding-top: 2rem; } }
+</style>

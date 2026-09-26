@@ -1,0 +1,126 @@
+---
+import OS from './OS.astro';
+import PL from './PL.astro';
+import LoadIcon from "./LoadIcon.astro";
+
+const slides = [OS, PL];
+const instanceId = `section1-${crypto.randomUUID()}`;
+const blindCount = 30;
+---
+
+<section class="scroll-transition" data-scroll-transition aria-label="PLOS-CLAN projects" style={`--slide-count: ${slides.length}`}>
+    <div class="transition-stage">
+        <div class="justify-center items-center min-h-screen flex text-white">
+            <LoadIcon width={200} height={200}/>
+            <h1 class="text-5xl font-light">Our Project</h1>
+        </div>
+        <svg class="transition-defs" aria-hidden="true" width="0" height="0">
+            <defs>
+                {slides.map((_, index) => (
+                    <clipPath id={`${instanceId}-${index}`} clipPathUnits="objectBoundingBox">
+                        {Array.from({ length: blindCount }, (_, row) => {
+                            const center = 1 - (row + 0.5) / blindCount;
+                            return [0, 1].map((half) => (
+                                <rect data-blind-set={index} data-center={center} data-half={half}
+                                    x="0" y={center - (half === 0 ? 0.5 / blindCount : 0)}
+                                    width="1" height={0.5 / blindCount + 0.002} />
+                            ));
+                        })}
+                    </clipPath>
+                ))}
+            </defs>
+        </svg>
+        {slides.map((Slide, index) => (
+            <div class="transition-slide" style={`--slide-clip: url(#${instanceId}-${index})`}>
+                <Slide />
+            </div>
+        ))}
+        <div class="transition-progress" aria-hidden="true">
+            {slides.map(() => <div class="transition-segment"><div class="transition-fill" /></div>)}
+        </div>
+    </div>
+</section>
+
+<script>
+    import { gsap } from 'gsap';
+    import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+    gsap.registerPlugin(ScrollTrigger);
+    let cleanup: (() => void) | undefined;
+
+    function initTransitions() {
+        cleanup?.();
+        const media = gsap.matchMedia();
+        media.add('(prefers-reduced-motion: no-preference)', () => {
+            const sections = document.querySelectorAll<HTMLElement>('[data-scroll-transition]');
+            sections.forEach((section) => {
+                const panels = Array.from(section.querySelectorAll<HTMLElement>('.transition-slide'));
+                const fills = section.querySelectorAll<HTMLElement>('.transition-fill');
+                const chapterDuration = 4.5;
+                const revealDuration = 1.68;
+                section.dataset.animated = 'true';
+                gsap.set(fills, { scaleX: 0, transformOrigin: 'left center' });
+
+                const syncPanels = (time: number) => {
+                    const current = Math.min(panels.length - 1, Math.floor(time / chapterDuration));
+                    panels.forEach((panel, index) => {
+                        const visible = index === current || (index === current - 1 && time % chapterDuration < revealDuration);
+                        const value = String(visible);
+                        if (panel.dataset.visible !== value) panel.dataset.visible = value;
+                        panel.inert = index !== current;
+                        panel.setAttribute('aria-hidden', String(index !== current));
+                    });
+                };
+                const timeline = gsap.timeline({
+                    onUpdate() { syncPanels(this.time()); },
+                    scrollTrigger: {
+                        trigger: section, start: 'top top', end: 'bottom bottom',
+                        scrub: 1.2, invalidateOnRefresh: true,
+                    },
+                });
+                panels.forEach((_, index) => {
+                    const blinds = Array.from(section.querySelectorAll<SVGRectElement>(`[data-blind-set="${index}"]`));
+                    const halfHeight = 1 / blinds.length;
+                    gsap.set(blinds, { attr: { y: (i: number) => Number(blinds[i].dataset.center), height: 0 } });
+                    timeline.to(blinds, {
+                        attr: {
+                            y: (i: number) => Number(blinds[i].dataset.center) - (blinds[i].dataset.half === '0' ? halfHeight : 0),
+                            height: halfHeight + 0.002,
+                        },
+                        duration: 0.5, stagger: 0.02, ease: 'power3.out',
+                    }, index * chapterDuration);
+                    timeline.to(fills[index], { scaleX: 1, duration: chapterDuration, ease: 'none' }, index * chapterDuration);
+                });
+                syncPanels(timeline.time());
+            });
+            return () => sections.forEach((section) => {
+                delete section.dataset.animated;
+                section.querySelectorAll<HTMLElement>('.transition-slide').forEach((panel) => {
+                    delete panel.dataset.visible;
+                    panel.inert = false;
+                    panel.removeAttribute('aria-hidden');
+                });
+            });
+        });
+        cleanup = () => media.revert();
+        ScrollTrigger.refresh();
+    }
+    initTransitions();
+    document.addEventListener('astro:page-load', initTransitions);
+    document.addEventListener('astro:before-swap', () => cleanup?.());
+</script>
+
+<style>
+    .scroll-transition { position: relative; background: #000; color: #fff; }
+    .transition-stage { position: relative; }
+    .transition-defs { position: absolute; pointer-events: none; }
+    .transition-slide { position: relative; min-height: 100svh; }
+    .transition-progress { display: none; }
+    [data-animated] { height: calc((var(--slide-count) * 2 + 1) * 100svh); }
+    [data-animated] .transition-stage { position: sticky; top: 0; height: 100svh; overflow: hidden; }
+    [data-animated] .transition-slide { position: absolute; inset: 0; min-height: 0; clip-path: var(--slide-clip); }
+    [data-animated] .transition-slide[data-visible='false'] { visibility: hidden; }
+    [data-animated] .transition-progress { display: flex; gap: 1rem; position: absolute; inset: auto clamp(1.5rem, 5vw, 5rem) 2rem; pointer-events: none; }
+    .transition-segment { flex: 1; height: 2px; background: rgb(255 255 255 / 25%); }
+    .transition-fill { width: 100%; height: 100%; background: #fff; }
+</style>

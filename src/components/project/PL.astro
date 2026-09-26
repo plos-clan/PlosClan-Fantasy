@@ -1,0 +1,21 @@
+---
+import VideoBack from "./VideoBack.astro";
+---
+
+<article class="pl-project">
+    <VideoBack/>
+    <div class="pl-content">
+        <p class="eyebrow">PLOS-CLAN / PROGRAMMING LANGUAGES</p>
+        <h2>EXPLORE<br />THE CORE</h2>
+        <p class="description" lang="zh-CN">从语法到运行时，探索编程语言的设计与实现，让每一个想法成为可以运行的代码。</p>
+    </div>
+</article>
+
+<style>
+    .pl-project { position: relative; min-height: 100svh; height: 100%; background-color: #080808; background-size: cover; background-position: center; color: #fff; }
+    .pl-content { padding: clamp(3rem, 12svh, 9rem) clamp(1.5rem, 5vw, 5rem) 6rem; }
+    .eyebrow { margin: 0 0 2rem; font-size: 0.7rem; letter-spacing: 0.25em; }
+    h2 { margin: 0; font-size: clamp(3rem, 8vw, 9rem); font-weight: 500; letter-spacing: -0.055em; line-height: 0.95; }
+    .description { margin-top: 2rem; max-width: 24rem; font-size: clamp(0.875rem, 1.1vw, 1rem); line-height: 1.9; }
+    @media (max-height: 600px) { h2 { font-size: clamp(2.5rem, 12svh, 4.5rem); } .pl-content { padding-top: 2rem; } }
+</style>
