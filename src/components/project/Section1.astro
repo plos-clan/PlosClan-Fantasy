@@ -44,6 +44,7 @@ const blindCount = 30;
 <script>
     import { gsap } from 'gsap';
     import { ScrollTrigger } from 'gsap/ScrollTrigger';
+    import { notifyProjectTransition } from './projectTransition';
 
     gsap.registerPlugin(ScrollTrigger);
     let cleanup: (() => void) | undefined;
@@ -56,8 +57,9 @@ const blindCount = 30;
             sections.forEach((section) => {
                 const panels = Array.from(section.querySelectorAll<HTMLElement>('.transition-slide'));
                 const fills = section.querySelectorAll<HTMLElement>('.transition-fill');
-                const chapterDuration = 4.5;
+                const chapterDuration = 8;
                 const revealDuration = 1.68;
+                const contentDuration = 2.8;
                 section.dataset.animated = 'true';
                 gsap.set(fills, { scaleX: 0, transformOrigin: 'left center' });
 
@@ -69,6 +71,13 @@ const blindCount = 30;
                         if (panel.dataset.visible !== value) panel.dataset.visible = value;
                         panel.inert = index !== current;
                         panel.setAttribute('aria-hidden', String(index !== current));
+                        const enterAt = index * chapterDuration + revealDuration / 2;
+                        const exitAt = (index + 1) * chapterDuration - contentDuration;
+                        const exiting = time >= exitAt;
+                        notifyProjectTransition(panel, {
+                            phase: exiting ? 'exit' : 'enter',
+                            progress: gsap.utils.clamp(0, 1, (time - (exiting ? exitAt : enterAt)) / contentDuration),
+                        });
                     });
                 };
                 const timeline = gsap.timeline({
@@ -96,6 +105,7 @@ const blindCount = 30;
             return () => sections.forEach((section) => {
                 delete section.dataset.animated;
                 section.querySelectorAll<HTMLElement>('.transition-slide').forEach((panel) => {
+                    notifyProjectTransition(panel, null);
                     delete panel.dataset.visible;
                     panel.inert = false;
                     panel.removeAttribute('aria-hidden');
@@ -116,7 +126,7 @@ const blindCount = 30;
     .transition-defs { position: absolute; pointer-events: none; }
     .transition-slide { position: relative; min-height: 100svh; }
     .transition-progress { display: none; }
-    [data-animated] { height: calc((var(--slide-count) * 2 + 1) * 100svh); }
+    [data-animated] { height: calc((var(--slide-count) * 4 + 1) * 100svh); }
     [data-animated] .transition-stage { position: sticky; top: 0; height: 100svh; overflow: hidden; }
     [data-animated] .transition-slide { position: absolute; inset: 0; min-height: 0; clip-path: var(--slide-clip); }
     [data-animated] .transition-slide[data-visible='false'] { visibility: hidden; }
