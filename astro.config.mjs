@@ -5,6 +5,9 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
+  server: {
+    allowedHosts: ['min0911.plos-clan.org'],
+  },
   vite: {
     plugins: [tailwindcss()],
     // Discover the lazy 3D scene's dependencies before serving the page.
@@ -13,6 +16,8 @@ export default defineConfig({
       include: [
         'gsap',
         'gsap/ScrollTrigger',
+        'gsap/Observer',
+        'gsap/ScrollToPlugin',
         'three',
         'three/addons/postprocessing/EffectComposer.js',
         'three/addons/postprocessing/RenderPass.js',

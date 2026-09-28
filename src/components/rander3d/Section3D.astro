@@ -1,0 +1,77 @@
+---
+import { cameraAnchors } from './renderer/cameraAnchors.js';
+
+const resolutions = [160, 320, 480, 640, 960, 1280, 1920];
+const focusClasses = 'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d5bc8f]';
+const controlClasses = `cursor-pointer rounded-[3px] border border-[#494237] bg-[#191713] px-[0.7rem] py-2 text-[0.8rem] text-[#eeeae3] disabled:cursor-wait ${focusClasses}`;
+const labelClasses = 'inline-flex items-center gap-[0.6rem] text-[0.8rem] text-[#c2bcb0]';
+const checkboxClasses = `cursor-pointer accent-[#c3ac81] disabled:cursor-wait ${focusClasses}`;
+const canvasClasses = 'pointer-events-none absolute inset-0 block size-full object-cover [image-rendering:pixelated]';
+---
+
+<section
+        class="relative isolate h-svh overflow-hidden bg-[#090909] text-[#eeeae3] after:pointer-events-none after:absolute after:inset-0 after:z-1 after:bg-[linear-gradient(180deg,rgba(0,0,0,0.65),transparent_38%,transparent_62%,rgba(0,0,0,0.75))] after:content-['']"
+        data-cathedral aria-label="RenderTM 哥特式大教堂" lang="zh-CN">
+    <div class="absolute inset-0 z-0 overflow-hidden bg-[#11100e]" data-stage aria-busy="true">
+        <canvas class={canvasClasses} data-canvas="webgl" width="1280" height="720"
+                aria-label="哥特式大教堂 WebGL2 实时场景"
+                hidden></canvas>
+        <canvas class={canvasClasses} data-canvas="webgpu" width="1280" height="720"
+                aria-label="哥特式大教堂 WebGPU 实时场景"
+                hidden></canvas>
+        <div class="absolute inset-0 grid place-items-center p-6 text-center text-sm text-[#b3a58c]" data-placeholder data-status role="status">
+            正在等待加载教堂场景…
+        </div>
+    </div>
+    <div class="pointer-events-none relative z-2 flex h-svh flex-col justify-between gap-6 px-[clamp(1.25rem,5vw,5rem)] py-[clamp(2rem,6svh,5rem)]">
+        <header class="flex flex-col items-start justify-between gap-6 text-shadow-[0_2px_20px_#0009] sm:flex-row sm:items-end sm:gap-0">
+            <div>
+                <p class="mb-5 text-[0.7rem] tracking-[0.28em] text-[#d0c5b0]">PLOS-CLAN / REALTIME RENDERING</p>
+                <h2 class="m-0 flex flex-wrap items-baseline gap-3 text-3xl font-medium leading-[1.1] tracking-[-0.045em] sm:text-5xl">
+                    RenderTM - <span data-backend-label aria-live="polite">Loading</span></h2>
+            </div>
+            <p class="m-0 text-sm leading-[1.9] text-[#d0c5b0]">原纯终端3D渲染版本。<br/>WebGPU/WebGL移植版本。
+            </p>
+        </header>
+
+        <div class="w-full space-y-6">
+            <div class="invisible max-w-lg space-y-3 opacity-0 text-shadow-[0_2px_16px_#000]" data-tour-caption aria-live="polite" aria-hidden="true">
+                <h3 class="text-2xl font-medium tracking-wide sm:text-3xl" data-tour-title>{cameraAnchors[0].title}</h3>
+                <p class="text-sm leading-relaxed text-[#d0c5b0] sm:text-base" data-tour-body>{cameraAnchors[0].text}</p>
+            </div>
+            <fieldset class="pointer-events-auto m-0 flex w-fit max-w-full flex-wrap items-center gap-x-6 gap-y-3 border-0 p-0 disabled:opacity-55" data-controls disabled>
+                <legend class="sr-only">渲染选项</legend>
+                <label class={labelClasses}>
+                    <input class={checkboxClasses} type="checkbox" data-setting="gi"/>全局光照
+                </label>
+                <label class={labelClasses}>分辨率
+                    <select class={controlClasses} data-resolution>
+                        {resolutions.map((width) =>
+                                <option value={width} selected={width === 1280}>{width} × {width * 9 / 16}</option>)}
+                    </select>
+                </label>
+            </fieldset>
+            <noscript class="pointer-events-auto"><p>Please enable JavaScript for load model。</p></noscript>
+        </div>
+    </div>
+</section>
+
+<script>
+    import {mountCathedralScene} from './renderer/createCathedralScene.js';
+
+    let cleanups: Array<() => void> = [];
+
+    function cleanupScenes() {
+        cleanups.forEach((cleanup) => cleanup());
+        cleanups = [];
+    }
+
+    function initScenes() {
+        cleanupScenes();
+        cleanups = Array.from(document.querySelectorAll<HTMLElement>('[data-cathedral]'), mountCathedralScene);
+    }
+
+    initScenes();
+    document.addEventListener('astro:page-load', initScenes);
+    document.addEventListener('astro:before-swap', cleanupScenes);
+</script>

@@ -1,0 +1,98 @@
+---
+const clipId = `section-handoff-${crypto.randomUUID()}`;
+const blindCount = 30;
+---
+
+<div data-section-handoff style={`--handoff-clip: url(#${clipId})`}>
+    <div data-handoff-outgoing><slot name="previous" /></div>
+    <div data-handoff-next>
+        <div data-handoff-content><slot name="next" /></div>
+        <div data-handoff-runway aria-hidden="true"></div>
+    </div>
+    <svg class="pointer-events-none absolute size-0" aria-hidden="true">
+        <defs>
+            <clipPath id={clipId} clipPathUnits="objectBoundingBox">
+                {Array.from({ length: blindCount }, (_, row) => {
+                    const center = 1 - (row + 0.5) / blindCount;
+                    return [0, 1].map((half) => (
+                        <rect data-handoff-blind data-center={center} data-half={half}
+                            x="0" y={center - (half === 0 ? 0.5 / blindCount : 0)}
+                            width="1" height={0.5 / blindCount + 0.002} />
+                    ));
+                })}
+            </clipPath>
+        </defs>
+    </svg>
+</div>
+
+<script>
+    import { gsap } from 'gsap';
+    import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+    gsap.registerPlugin(ScrollTrigger);
+    let cleanup: (() => void) | undefined;
+
+    function init() {
+        cleanup?.();
+        const media = gsap.matchMedia();
+        media.add('(prefers-reduced-motion: no-preference)', () => {
+            const disposers = Array.from(document.querySelectorAll<HTMLElement>('[data-section-handoff]'), (root) => {
+                const outgoing = root.querySelector<HTMLElement>('[data-handoff-outgoing]')!;
+                const next = root.querySelector<HTMLElement>('[data-handoff-next]')!;
+                const incoming = root.querySelector<HTMLElement>('[data-handoff-content]')!;
+                const runway = root.querySelector<HTMLElement>('[data-handoff-runway]')!;
+                const blinds = Array.from(root.querySelectorAll<SVGRectElement>('[data-handoff-blind]'));
+                const halfHeight = 1 / blinds.length;
+                root.dataset.handoffAnimated = '';
+
+                const sync = (progress: number) => {
+                    incoming.inert = progress === 0;
+                    incoming.dataset.visible = String(progress > 0);
+                    incoming.setAttribute('aria-hidden', String(progress === 0));
+                    outgoing.inert = progress > 0;
+                    outgoing.setAttribute('aria-hidden', String(progress === 1));
+                };
+                gsap.set(blinds, { attr: { y: (i: number) => Number(blinds[i].dataset.center), height: 0 } });
+                const tween = gsap.to(blinds, {
+                    attr: {
+                        y: (i: number) => Number(blinds[i].dataset.center) - (blinds[i].dataset.half === '0' ? halfHeight : 0),
+                        height: halfHeight + 0.002,
+                    },
+                    duration: 0.5, stagger: 0.02, ease: 'power3.out',
+                    onUpdate() { sync(this.progress()); },
+                    scrollTrigger: {
+                        trigger: next, start: 'top top',
+                        end: () => `+=${runway.offsetHeight}`,
+                        scrub: 1.2, invalidateOnRefresh: true,
+                        onRefresh(self) { sync(self.animation?.progress() ?? self.progress); },
+                    },
+                });
+                sync(tween.progress());
+                return () => {
+                    delete root.dataset.handoffAnimated;
+                    delete incoming.dataset.visible;
+                    [incoming, outgoing].forEach((element) => {
+                        element.inert = false;
+                        element.removeAttribute('aria-hidden');
+                    });
+                };
+            });
+            return () => disposers.forEach((dispose) => dispose());
+        });
+        cleanup = () => media.revert();
+        ScrollTrigger.refresh();
+    }
+    init();
+    document.addEventListener('astro:page-load', init);
+    document.addEventListener('astro:before-swap', () => cleanup?.());
+</script>
+
+<style>
+    [data-section-handoff] { position: relative; }
+    [data-handoff-animated] { --handoff-distance: 150svh; }
+    [data-handoff-animated] > [data-handoff-next] { position: relative; margin-top: calc(-100svh - var(--handoff-distance)); }
+    [data-handoff-animated] [data-handoff-content] { position: sticky; top: 0; clip-path: var(--handoff-clip); }
+    [data-handoff-animated] [data-handoff-runway] { height: var(--handoff-distance); }
+    [data-handoff-animated] > [data-handoff-next]::after { content: ''; display: block; height: var(--handoff-tail-height, 100svh); }
+    [data-handoff-animated] [data-handoff-content][data-visible='false'] { visibility: hidden; }
+</style>
